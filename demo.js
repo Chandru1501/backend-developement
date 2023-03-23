@@ -1,23 +1,40 @@
 
 const http = require("http");
+const fs = require('fs');
+
+let value="enter a value";
 
 let server = http.createServer((req,res)=>{
-    let value = ""
-     if(req.url=="/home"){
-          value = "Welcome home"
+    let url = req.url;
+    let method =req.method
+
+    if(url==="/message" &&  method==="POST"){
+        const body = []
+        req.on("data",(chunk)=>{
+           body.push(chunk);
+           console.log(chunk);
+        })
+        req.on("end",()=>{
+            let parsedbody = Buffer.concat(body).toString();
+            console.log(parsedbody);
+            let message = parsedbody.split("=")
+            console.log(message)
+            fs.writeFileSync('message.txt',message[1])
+            value=message[1];
+        })
+        res.setHeader('Location','/')
+        res.statusCode=302;  // for redirecting
+        return res.end();
     }
-    else if(req.url=="/about"){
-        value = " Welcome to About Us page"
-    }
-    else if(req.url=="/node"){
-        value = " Welcome to my Node Js project"
-    }
+
+
+    res.setHeader("Content-type","text/html")
     res.write('<html>')
-    res.write('<head><title>this is my response</title></head>')
-    res.write(`<body><h1>${value}</h1></body>`)
+    res.write('<head><title>Enter message</title></head>')
+    res.write(`<body><h3>${value}</h3><form action="/message" method="POST"><input type="text" name="message"><button type="submit">send</button></body>`)
     res.write("</html>")
     res.end()
-    process.exit()
 })
+
 
 server.listen(4000);
